@@ -137,6 +137,22 @@ class AtomNames:
         best_naming = choose_best_naming(temp_list)
         self._update_names(best_naming)
 
+    def _name_pyrimidines(self, graph):
+        directions = ["forward", "reverse"]
+        start_nitrogen = find_second_N_purines(graph)
+        
+        temp_list = []
+        
+        for direction in directions:
+            temp_list.append(self._traverse_cycle(graph, 
+                                                  start_nitrogen, 
+                                                  direction, 
+                                                  start_index=1))
+            
+
+        best_naming = choose_best_naming(temp_list)
+        self._update_names(best_naming)
+
     def _update_names(self, name_dict):
         for key, value in name_dict.items():
             if not self.named_list[self.elements.index(key)]:
@@ -191,9 +207,10 @@ class Molecule(AtomNames):
         
         cycles = find_cycles_in_graph(self.adj_list_indexes)
 
+        purines = False
         if len(cycles) > 2:
-            purines = False
-        
+            purines = True
+
         temp = [pd.Series([self.elements[id] for id in cycle_id]) for cycle_id in cycles]
 
         for cycle in temp:
@@ -203,7 +220,7 @@ class Molecule(AtomNames):
                 start_sugar_node, next_sugar_node = find_start_sugar(cycle)
                 self._name_sugar(cycle, start_sugar_node, next_sugar_node)
 
-            elif not purines:
+            elif purines:
                 if len(cycle) == 6:
                     cycle = {k: v for k, v in self.adj_list_series.items() if k in cycle.values}
                     self._name_purines(cycle)
@@ -212,8 +229,11 @@ class Molecule(AtomNames):
                     cycle = {k: v for k, v in self.adj_list_series.items() if k in cycle.values}
                     self._name_purines_2nd(cycle)
 
-            elif purines:
-                pass
+            else:
+                if len(cycle) == 6:
+                    cycle = {k: v for k, v in self.adj_list_series.items() if k in cycle.values}
+                    self._name_pyrimidines(cycle)
+
 
         for key, values in self.adj_list_series.items():
             if key.startswith('C'):
@@ -222,7 +242,7 @@ class Molecule(AtomNames):
                         old_atom_index = int(atom[1:])             
                         self.named_list[old_atom_index] = atom[0] + self.named_list[int(key[1:])][1:]        
 
-        print(self.named_list)
+        #print(self.named_list)
     
     def __len__(self):
         return len(self.elements)
@@ -232,3 +252,4 @@ class Molecule(AtomNames):
             return self.elements[pos][0], (self.x[pos], self.y[pos], self.z[pos])
         else:
             return self.named_list[pos], (self.x[pos], self.y[pos], self.z[pos])
+
