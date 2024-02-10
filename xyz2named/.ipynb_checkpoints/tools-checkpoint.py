@@ -64,23 +64,14 @@ def sum_of_nitrogens(naming):
             nitrogen_sum += int(name[1:])
     return nitrogen_sum
 
-def choose_best_naming(naming_list, return_best=True):
-    if return_best:
-        comparison_operator = min
-        initial_value = float('inf')
-    else:
-        comparison_operator = max
-        initial_value = float('-inf')
-        
+def choose_best_naming(naming_list):
+    min_sum = float('inf')
     best_naming = None
-    min_max_value = initial_value
-    
     for naming in naming_list:
-        current_value = sum_of_nitrogens(naming)
-        if comparison_operator(current_value, min_max_value):
-            min_max_value = current_value
+        current_sum = sum_of_nitrogens(naming)
+        if current_sum < min_sum:
+            min_sum = current_sum
             best_naming = naming
-    
     return best_naming
 
 cpk_colors = dict(

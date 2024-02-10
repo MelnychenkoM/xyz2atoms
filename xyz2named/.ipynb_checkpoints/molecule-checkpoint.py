@@ -91,24 +91,20 @@ class AtomNames:
                 index[0] = start_index
 
         best_naming = choose_best_naming(temp_list)
-
-        """ TEMP FILES """
-        self.temp_list = temp_list
-        print(f"Purine first cycle: {best_naming}")
         self._update_names(best_naming)
 
-    def _traverse_cycle(self, graph, start_node, direction='forward', start_index=0, idx=1):
+    def _traverse_cycle(self, graph, start_node, direction='forward', start_index=0):
     
         visited = set()
         stack = [start_node]
-        index = start_index
+        index = start_index - 1
         atom_names = {}
     
         while stack:
             current_node = stack.pop()
             if current_node not in visited:
                 visited.add(current_node)
-                index += idx
+                index += 1
     
                 neighbors = [neighbor for neighbor in graph[current_node] if neighbor in graph]
                 
@@ -135,11 +131,10 @@ class AtomNames:
             temp_list.append(self._traverse_cycle(graph, 
                                                   start_purine_node, 
                                                   direction, 
-                                                  start_index=10, idx=-1))
+                                                  start_index=7))
             
 
         best_naming = choose_best_naming(temp_list)
-        #print(f"Purine second cycle: {best_naming}")
         self._update_names(best_naming)
 
     def _name_pyrimidines(self, graph):
@@ -228,7 +223,6 @@ class Molecule(AtomNames):
             elif purines:
                 if len(cycle) == 6:
                     cycle = {k: v for k, v in self.adj_list_series.items() if k in cycle.values}
-                    print(cycle.keys())
                     self._name_purines(cycle)
 
                 elif len(cycle) == 5:
