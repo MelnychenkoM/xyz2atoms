@@ -47,30 +47,30 @@ class AtomNames:
         name_sugar_dfs(start_node)
 
         # Name the only carbon left, which is C5'
-        """
+
         for idx, value in self.adj_list_indexes.items():
             if not self.named_list[idx] and self.elements[idx].startswith('C'):
                 self.named_list[idx] = "C5'"
                 break
-        """
+
         return 
 
     def _name_purines(self, base_graph):
         
         directions = ["forward", "reverse"]
-        start_purine_node = find_first_purines(base_graph)
-        
+        start_purine_node = self._find_C4_purines(base_graph)
+
         temp_list = []
         
         for direction in directions:
             temp_list.append(self._traverse_cycle(base_graph, 
                                                   start_purine_node, 
                                                   direction, 
-                                                  start_index=4, idx=1, cycle=7))
+                                                  start_index=3, idx=1, cycle=7))
             
 
         best_naming = choose_best_naming(temp_list)
-       
+        self._update_names(best_naming, replace=True)
 
     def _traverse_cycle(self, graph, start_node, direction='forward', start_index=0, idx=1, cycle=100):
     
@@ -115,10 +115,9 @@ class AtomNames:
                                                   start_purine_node, 
                                                   direction, 
                                                   start_index=10, idx=-1))
-            
+        
 
-        best_naming = choose_best_naming(temp_list, return_best=False)
-        print(temp_list)
+        best_naming = choose_best_naming(temp_list, return_smallest=False)
         self._update_names(best_naming)
 
     def _name_pyrimidines(self, graph):
@@ -135,8 +134,13 @@ class AtomNames:
             
 
         best_naming = choose_best_naming(temp_list)
-        print(temp_list)
         self._update_names(best_naming)
+
+    def _find_C4_purines(self, base_graph):
+        for key, value in base_graph.items():
+            if value.str.contains('N').sum() == 2:
+                if self.elements[self.named_list.index('N9')] in value.to_list():
+                    return key
 
     def _update_names(self, name_dict, replace=False):
         for key, value in name_dict.items():
@@ -193,6 +197,7 @@ class Molecule(AtomNames):
         self.named_list = ['H' if element[0] == 'H' else '' for element in self.elements]
         
         cycles = find_cycles_in_graph(self.adj_list_indexes)
+        cycles = sorted(cycles, key=len)
 
         purines = False
         if len(cycles) > 2:
@@ -208,31 +213,30 @@ class Molecule(AtomNames):
                 self._name_sugar(cycle, start_sugar_node, next_sugar_node)
 
             elif purines:
-                if len(cycle) == 6:
-                    cycle = {k: v for k, v in self.adj_list_series.items() if k in cycle.values}
-                    self.base = cycle
-                    self._name_purines(cycle)
-                    #self._name_purines(cycle)
 
-                elif len(cycle) == 5:
+                if len(cycle) == 5:
                     cycle = {k: v for k, v in self.adj_list_series.items() if k in cycle.values}
                     self.base2 = cycle
                     self._name_purines_2nd(cycle)
+
+                elif len(cycle) == 6:
+                    cycle = {k: v for k, v in self.adj_list_series.items() if k in cycle.values}
+                    self.base = cycle
+                    self._name_purines(cycle)
 
             else:
                 if len(cycle) == 6:
                     cycle = {k: v for k, v in self.adj_list_series.items() if k in cycle.values}
                     self._name_pyrimidines(cycle)
 
-        """
+
         for key, values in self.adj_list_series.items():
             if key.startswith('C'):
                 for atom in values:
                     if not self.named_list[int(atom[1:])]:
                         old_atom_index = int(atom[1:])             
                         self.named_list[old_atom_index] = atom[0] + self.named_list[int(key[1:])][1:]        
-        """
-        #print(self.named_list)
+
     
     def __len__(self):
         return len(self.elements)
