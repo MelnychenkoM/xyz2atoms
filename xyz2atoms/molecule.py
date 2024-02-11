@@ -156,7 +156,7 @@ class Molecule(AtomNames):
         self.z = []
         self.elements = []
         self.adj_matrix = None
-        self.named_list = None
+        self.named_list = []
         self.adj_list_series = {}
         self.adj_list_indexes = {}
         self.bond_lengths = {}
@@ -173,6 +173,28 @@ class Molecule(AtomNames):
                 
         self._build_adj_matrix()
         self._determine_molecule()
+
+    def read_pdb(self, file_path, model):
+        found_model = False
+        with open(file_path, 'r') as fl:
+            for line in fl:
+                if not found_model:
+                    if line.startswith('MODEL') and int(line[10:].strip()) == model:
+                        found_model = True
+                else:
+                    if line.startswith('ATOM'):
+                        self.x.append(float(line[30:38].strip()))
+                        self.y.append(float(line[38:46].strip()))
+                        self.z.append(float(line[46:54].strip()))
+                        self.named_list.append(line[11:16].strip())
+                        self.elements.append(line[11:16].strip()[0])
+                    
+                    elif line.startswith('ENDMDL'):
+                        self._build_adj_matrix()
+                        break
+                        
+        #print("Model not found.")
+        return
     
     def _build_adj_matrix(self):
         """Builds connection matrix"""
