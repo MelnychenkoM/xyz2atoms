@@ -51,6 +51,11 @@ def find_start_sugar(adj_list_sugar):
     
     return start_node, next_node
 
+def find_first_purines(adj_list):
+    for key, value in adj_list.items():
+        if value.str.contains('N').sum() == 1:
+            return key
+
 def find_second_N_purines(adj_list_2base):
     for key, value in adj_list_2base.items():
         if key[0] == 'N':
@@ -67,10 +72,10 @@ def sum_of_nitrogens(naming):
 def choose_best_naming(naming_list, return_best=True):
     if return_best:
         comparison_operator = min
-        initial_value = float('inf')
+        initial_value = 100
     else:
         comparison_operator = max
-        initial_value = float('-inf')
+        initial_value = 0
         
     best_naming = None
     min_max_value = initial_value
@@ -111,7 +116,7 @@ def to_plotly_figure(graph) -> go.Figure:
             z=graph.z,
             mode="markers",
             marker=markers,
-            text=graph.elements,
+            text=graph.elements, # CHANGE LATER
         )
         return trace
 

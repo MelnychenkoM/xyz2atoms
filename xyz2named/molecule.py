@@ -47,57 +47,32 @@ class AtomNames:
         name_sugar_dfs(start_node)
 
         # Name the only carbon left, which is C5'
-
+        """
         for idx, value in self.adj_list_indexes.items():
             if not self.named_list[idx] and self.elements[idx].startswith('C'):
                 self.named_list[idx] = "C5'"
                 break
-
+        """
         return 
 
-    def _name_purines(self, base_graph, start_index=1):
-        visited = {}
-        atom_names = {}
-        index = [start_index]
-    
-        def name_base_dfs(start_node, next_node):
-            stack = [start_node]
-    
-            while stack:
-                current_node = stack.pop()
-                if not visited.get(current_node, False):
-                    visited[current_node] = True
-                    if current_node.startswith('N'):
-                        atom_names[current_node] = f"N{index[0]}"
-                        index[0] += 1
-                    elif current_node.startswith('C'):
-                        atom_names[current_node] = f"C{index[0]}"
-                        index[0] += 1
-                neighbors = [neighbor for neighbor in base_graph[current_node] if neighbor in base_graph]
-                for neighbor in neighbors:
-                    if neighbor == next_node:
-                        stack.append(neighbor)
-                    elif not visited.get(neighbor, False):
-                        stack.append(neighbor)
-    
+    def _name_purines(self, base_graph):
+        
+        directions = ["forward", "reverse"]
+        start_purine_node = find_first_purines(base_graph)
+        
         temp_list = []
-    
-        for start_node in base_graph.keys():
-            for next_node in base_graph[start_node]:
-                name_base_dfs(start_node, next_node)
-                temp_list.append(atom_names.copy())
-                visited.clear()
-                atom_names.clear()
-                index[0] = start_index
+        
+        for direction in directions:
+            temp_list.append(self._traverse_cycle(base_graph, 
+                                                  start_purine_node, 
+                                                  direction, 
+                                                  start_index=4, idx=1, cycle=7))
+            
 
         best_naming = choose_best_naming(temp_list)
+       
 
-        """ TEMP FILES """
-        self.temp_list = temp_list
-        print(f"Purine first cycle: {best_naming}")
-        self._update_names(best_naming)
-
-    def _traverse_cycle(self, graph, start_node, direction='forward', start_index=0, idx=1):
+    def _traverse_cycle(self, graph, start_node, direction='forward', start_index=0, idx=1, cycle=100):
     
         visited = set()
         stack = [start_node]
@@ -108,8 +83,12 @@ class AtomNames:
             current_node = stack.pop()
             if current_node not in visited:
                 visited.add(current_node)
-                index += idx
-    
+
+                if index == cycle - 1:
+                    index += 1
+
+                index = (index + idx) % cycle
+
                 neighbors = [neighbor for neighbor in graph[current_node] if neighbor in graph]
                 
                 if current_node.startswith('N'):
@@ -138,8 +117,8 @@ class AtomNames:
                                                   start_index=10, idx=-1))
             
 
-        best_naming = choose_best_naming(temp_list)
-        #print(f"Purine second cycle: {best_naming}")
+        best_naming = choose_best_naming(temp_list, return_best=False)
+        print(temp_list)
         self._update_names(best_naming)
 
     def _name_pyrimidines(self, graph):
@@ -152,16 +131,19 @@ class AtomNames:
             temp_list.append(self._traverse_cycle(graph, 
                                                   start_nitrogen, 
                                                   direction, 
-                                                  start_index=1))
+                                                  start_index=0))
             
 
         best_naming = choose_best_naming(temp_list)
+        print(temp_list)
         self._update_names(best_naming)
 
-    def _update_names(self, name_dict):
+    def _update_names(self, name_dict, replace=False):
         for key, value in name_dict.items():
-            if not self.named_list[self.elements.index(key)]:
-                self.named_list[self.elements.index(key)] = value
+            index = self.elements.index(key)
+            if not self.named_list[index] or replace:
+                self.named_list[index] = value
+
 
 class Molecule(AtomNames):
     def __init__(self):
@@ -228,11 +210,13 @@ class Molecule(AtomNames):
             elif purines:
                 if len(cycle) == 6:
                     cycle = {k: v for k, v in self.adj_list_series.items() if k in cycle.values}
-                    print(cycle.keys())
+                    self.base = cycle
                     self._name_purines(cycle)
+                    #self._name_purines(cycle)
 
                 elif len(cycle) == 5:
                     cycle = {k: v for k, v in self.adj_list_series.items() if k in cycle.values}
+                    self.base2 = cycle
                     self._name_purines_2nd(cycle)
 
             else:
@@ -240,14 +224,14 @@ class Molecule(AtomNames):
                     cycle = {k: v for k, v in self.adj_list_series.items() if k in cycle.values}
                     self._name_pyrimidines(cycle)
 
-
+        """
         for key, values in self.adj_list_series.items():
             if key.startswith('C'):
                 for atom in values:
                     if not self.named_list[int(atom[1:])]:
                         old_atom_index = int(atom[1:])             
                         self.named_list[old_atom_index] = atom[0] + self.named_list[int(key[1:])][1:]        
-
+        """
         #print(self.named_list)
     
     def __len__(self):
