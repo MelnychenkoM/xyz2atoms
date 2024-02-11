@@ -250,3 +250,17 @@ def to_plotly_figure(graph) -> go.Figure:
     figure = go.Figure(data=data, layout=layout)
 
     return figure
+
+def torsion_angle(atom1, atom2, atom3, atom4):
+    vec1 = atom2 - atom1
+    vec2 = atom3 - atom2
+    vec3 = atom4 - atom3
+
+    u1 = np.cross(vec1, vec2)
+    u2 = np.cross(vec2, vec3)
+
+    norms = np.linalg.norm(u1) * np.linalg.norm(u2)
+    result = np.degrees(np.arccos(np.dot(u1, u2)  / norms))
+    mx = np.array([u1, u2, vec2])
+
+    return result if np.linalg.det(mx) > 0 else -result

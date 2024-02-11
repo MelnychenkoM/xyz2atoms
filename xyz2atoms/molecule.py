@@ -264,8 +264,16 @@ class Molecule(AtomNames):
         return len(self.elements)
 
     def __getitem__(self, pos):
-        if self.named_list[pos] == "":
-            return self.elements[pos][0], (self.x[pos], self.y[pos], self.z[pos])
-        else:
-            return self.named_list[pos], (self.x[pos], self.y[pos], self.z[pos])
+        if isinstance(pos, str):
+            try:
+                index = self.named_list.index(pos)
+                return np.array([self.x[index], self.y[index], self.z[index]])
+            except ValueError:
+                raise KeyError(f"Atom with name {pos} is not found.")
+
+        elif  isinstance(pos, int):
+            if self.named_list[pos] == "":
+                return self.elements[pos][0], np.array([self.x[pos], self.y[pos], self.z[pos]])
+            else:
+                return self.named_list[pos], np.array([self.x[pos], self.y[pos], self.z[pos]])
 
