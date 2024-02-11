@@ -32,7 +32,7 @@ to_plotly_figure(pdb_mol)
 # Access by index
 mol[1]
 
-# Acess by atom name
+# Access by atom name
 mol["C4'"]
 
 # Calculate torsion angle
