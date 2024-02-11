@@ -1,7 +1,7 @@
 import setuptools
 
 setuptools.setup(
-    name="xyz2graph",
+    name="xyz2atoms",
     version="0.0.1",
     author="Mykola Melnychenko",
     url="https://github.com/MelnychenkoM/xyz2atoms",
