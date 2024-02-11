@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from xyz2named.tools import *
+from xyz2atoms.tools import *
 
 
 covalent_radius = {
