@@ -176,7 +176,7 @@ class Molecule(AtomNames):
 
     def read_pdb(self, file_path, model):
         found_model = False
-        with open(file_path, 'r') as fl:
+        with open(file_path, 'r', encoding='utf-8') as fl:
             for line in fl.readlines():
                 if not found_model:
                     if line.startswith('MODEL') and int(line[10:].strip()) == model:
