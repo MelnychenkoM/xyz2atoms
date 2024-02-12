@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="xyz2atoms",
-    version="0.0.1",
+    version="1.0.0",
     author="Mykola Melnychenko",
     url="https://github.com/MelnychenkoM/xyz2atoms",
     packages=setuptools.find_packages(),

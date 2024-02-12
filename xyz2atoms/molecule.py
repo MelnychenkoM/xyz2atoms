@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import os
 from xyz2atoms.tools import *
 
 
@@ -192,9 +193,15 @@ class Molecule(AtomNames):
                     elif line.startswith('ENDMDL'):
                         self._build_adj_matrix()
                         break
-                        
-        #print("Model not found.")
-        return
+    
+    def write_pdb(self, file_name):
+        with open(file_name, 'w') as fl:
+            for i in range(len(self.elements)):
+                fl.write(
+                    f"ATOM  {i+1:>4}  {self.named_list[i]:<3}   A{self.named_list[i][0]:<3}"
+                    f"{i+1:>4}    {self.x[i]:>8.3f}{self.y[i]:>8.3f}{self.z[i]:>8.3f}  "
+                    f"1.00  0.00      {self.elements[i][0]:>2}\n"
+                )
     
     def _build_adj_matrix(self):
         """Builds connection matrix"""
