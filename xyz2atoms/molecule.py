@@ -142,6 +142,21 @@ class AtomNames:
             if value.str.contains('N').sum() == 2:
                 if self.elements[self.named_list.index('N9')] in value.to_list():
                     return key
+                
+    def _get_sugar_angles(self):
+        atom_sets = {
+            "v0": ["C4'", "O4'", "C1'", "C2'"],
+            "v1": ["O4'", "C1'", "C2'", "C3'"],
+            "v2": ["C1'", "C2'", "C3'", "C4'"],
+            "v3": ["C2'", "O3'", "C4'", "O4'"],
+            "v4": ["C3'", "C4'", "O4'", "C1'"]
+        }
+
+        self.sugar_torsion_angles = {}
+
+        for key, atom_set in atom_sets.items():
+            torsion_angle_value = torsion_angle(*[self[atom_name] for atom_name in atom_set])
+            self.sugar_torsion_angles[key] = torsion_angle_value
 
     def _update_names(self, name_dict, replace=False):
         for key, value in name_dict.items():
@@ -161,7 +176,8 @@ class Molecule(AtomNames):
         self.adj_list_series = {}
         self.adj_list_indexes = {}
         self.bond_lengths = {}
-    
+        self.chain_identifier = []
+
     def read_xyz(self, file_path):
         """Reads xyz file"""
         with open(file_path, 'r') as fl:
@@ -174,8 +190,9 @@ class Molecule(AtomNames):
                 
         self._build_adj_matrix()
         self._determine_molecule()
+        self._get_sugar_angles()
 
-    def read_pdb(self, file_path, model):
+    def read_pdb(self, file_path, model=False):
         found_model = False
         with open(file_path, 'r', encoding='utf-8') as fl:
             for line in fl.readlines():
@@ -184,6 +201,7 @@ class Molecule(AtomNames):
                         found_model = True
                 else:
                     if line.startswith('ATOM'):
+                        self.chain_identifier.append(float(line[25].strip()))
                         self.x.append(float(line[30:38].strip()))
                         self.y.append(float(line[38:46].strip()))
                         self.z.append(float(line[46:54].strip()))
@@ -193,7 +211,7 @@ class Molecule(AtomNames):
                     elif line.startswith('ENDMDL'):
                         self._build_adj_matrix()
                         break
-    
+        
     def write_pdb(self, file_name):
         with open(file_name, 'w') as fl:
             for i in range(len(self.elements)):
@@ -237,7 +255,6 @@ class Molecule(AtomNames):
         for cycle in temp:
             if len(cycle) == 5 and not cycle.str.contains('N').any():
                 cycle = {k: v for k, v in self.adj_list_series.items() if k in cycle.values}
-                
                 start_sugar_node, next_sugar_node = find_start_sugar(cycle)
                 self._name_sugar(cycle, start_sugar_node, next_sugar_node)
 
@@ -245,12 +262,10 @@ class Molecule(AtomNames):
 
                 if len(cycle) == 5:
                     cycle = {k: v for k, v in self.adj_list_series.items() if k in cycle.values}
-                    self.base2 = cycle
                     self._name_purines_2nd(cycle)
 
                 elif len(cycle) == 6:
                     cycle = {k: v for k, v in self.adj_list_series.items() if k in cycle.values}
-                    self.base = cycle
                     self._name_purines(cycle)
 
             else:
@@ -266,7 +281,6 @@ class Molecule(AtomNames):
                         old_atom_index = int(atom[1:])             
                         self.named_list[old_atom_index] = atom[0] + self.named_list[int(key[1:])][1:]        
 
-    
     def __len__(self):
         return len(self.elements)
 
@@ -278,9 +292,20 @@ class Molecule(AtomNames):
             except ValueError:
                 raise KeyError(f"Atom with name {pos} is not found.")
 
-        elif  isinstance(pos, int):
+        elif isinstance(pos, int):
             if self.named_list[pos] == "":
                 return self.elements[pos][0], np.array([self.x[pos], self.y[pos], self.z[pos]])
             else:
                 return self.named_list[pos], np.array([self.x[pos], self.y[pos], self.z[pos]])
+        else:
+            raise TypeError("Invalid index type.")
+    
+    def get_atom(self, name, chain=0):
+        pass
+
+    def get_distance(self, atom1, atom2):
+        index1 = self.named_list.index(atom1)
+        index2 = self.named_list.index(atom2)
+        return self.bond_lengths.get(frozenset([index1, index2]), 0)
+
 
