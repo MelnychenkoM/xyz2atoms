@@ -176,7 +176,7 @@ class Molecule(AtomNames):
         self.adj_list_series = {}
         self.adj_list_indexes = {}
         self.bond_lengths = {}
-        self.chain_identifier = []
+        self.chain_list = []
 
     def read_xyz(self, file_path):
         """Reads xyz file"""
@@ -201,7 +201,7 @@ class Molecule(AtomNames):
                         found_model = True
                 else:
                     if line.startswith('ATOM'):
-                        self.chain_identifier.append(float(line[25].strip()))
+                        self.chain_list.append(int(line[25].strip()))
                         self.x.append(float(line[30:38].strip()))
                         self.y.append(float(line[38:46].strip()))
                         self.z.append(float(line[46:54].strip()))
@@ -250,7 +250,7 @@ class Molecule(AtomNames):
         if len(cycles) > 2:
             purines = True
 
-        temp = [pd.Series([self.elements[id] for id in cycle_id]) for cycle_id in cycles]
+        temp = [pd.Series([self.elements[ids] for ids in cycle_id]) for cycle_id in cycles]
 
         for cycle in temp:
             if len(cycle) == 5 and not cycle.str.contains('N').any():
@@ -300,8 +300,13 @@ class Molecule(AtomNames):
         else:
             raise TypeError("Invalid index type.")
     
-    def get_atom(self, name, chain=0):
-        pass
+    def get(self, name, chain=None):
+        try:
+            idx = [i for i, atom_name in enumerate(self.named_list) 
+                    if atom_name == name and self.chain_list[i] == chain][0]
+        except IndexError as e:
+            return self[name]
+        return np.array([self.x[idx], self.y[idx], self.z[idx]])
 
     def get_distance(self, atom1, atom2):
         index1 = self.named_list.index(atom1)
